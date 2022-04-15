@@ -8,7 +8,7 @@ M.details = {
 }
 
 M.dap_info = {
-	name_adapter = "cpptools",
+	name_adapter = "cppdbg",
 	name_configuration = { "c", "cpp", "rust" },
 }
 
@@ -20,26 +20,65 @@ M.config = {
 	configurations = {
 		{
 			name = "Launch file",
-			type = "cpptools",
+			type = "cppdbg",
 			request = "launch",
-			miDebuggerPath = dbg_path .. "gdb-10.2/gdb/gdb",
-			program = function()
-				return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. "/", "file")
-			end,
+			miDebuggerPath = "/usr/bin/gdb",
+			-- program = function()
+			-- 	return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. "/", "file")
+			-- end,
+            program = '${workspaceFolder}/build/${fileBasenameNoExtension}',
 			cwd = "${workspaceFolder}",
 			stopOnEntry = true,
+            setupCommands = {
+                {
+                description =  'enable pretty printing',
+                text = '-enable-pretty-printing',
+                ignoreFailures = false
+                },
+                -- {
+                -- description =  'no welcome',
+                -- text = '--quiet',
+                -- ignoreFailures = false
+                -- },
+            },
 		},
+        {
+            name = "Attach process",
+            type = "cppdbg",
+            request = "attach",
+            processId = require('dap.utils').pick_process,
+            -- program = function()
+            --   return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+            -- end,
+            program = '${workspaceFolder}/build/${fileBasenameNoExtension}',
+            cwd = "${workspaceFolder}",
+            setupCommands = {
+                {
+                description =  'enable pretty printing',
+                text = '-enable-pretty-printing',
+                ignoreFailures = false
+                },
+            },
+        },
 		{
 			name = "Attach to gdbserver :1234",
 			type = "cppdbg",
 			request = "launch",
 			MIMode = "gdb",
 			miDebuggerServerAddress = "localhost:1234",
-			miDebuggerPath = dbg_path .. "gdb-10.2/gdb/gdb",
+   			miDebuggerPath = "/usr/bin/gdb",
 			cwd = "${workspaceFolder}",
-			program = function()
-				return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. "/", "file")
-			end,
+			-- program = function()
+			-- 	return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. "/", "file")
+			-- end,
+            program = '${workspaceFolder}/build/${fileBasenameNoExtension}',
+            setupCommands = {
+                {
+                description =  'enable pretty printing',
+                text = '-enable-pretty-printing',
+                ignoreFailures = false
+                },
+            },
 		},
 	},
 }
@@ -47,28 +86,20 @@ M.config = {
 local install_string
 if proxy == nil or proxy == "" then
 	install_string = [[
-		wget $(curl -s https://api.github.com/repos/microsoft/vscode-cpptools/releases/latest | grep browser_ | cut -d\" -f 4 | grep linux.vsix)
+		wget $(curl -s https://api.github.com/repos/microsoft/vscode-cpptools/releases/tags/1.7.1 | grep browser_ | cut -d\" -f 4 | grep linux.vsix)
 		mv cpptools-linux.vsix cpptools-linux.zip
 		unzip cpptools-linux.zip
 		chmod +x extension/debugAdapters/bin/OpenDebugAD7
 		cp extension/cppdbg.ad7Engine.json extension/debugAdapters/bin/nvim-dap.ad7Engine.json
-		wget https://ftp.gnu.org/gnu/gdb/gdb-10.2.tar.xz && tar -xvf gdb-10.2.tar.xz
-		cd gdb-10.2/
-		./configure
-		make
 	]]
 else
 	install_string = string.format(
 		[[
-      wget -e https_proxy=%s $(curl -s https://api.github.com/repos/microsoft/vscode-cpptools/releases/latest -x %s| grep browser_ | cut -d\" -f 4 | grep linux.vsix)
+      wget -e https_proxy=%s $(curl -s https://api.github.com/repos/microsoft/vscode-cpptools/releases/tags/1.7.1 | grep browser_ | cut -d\" -f 4 | grep linux.vsix)
       mv cpptools-linux.vsix cpptools-linux.zip
       unzip cpptools-linux.zip
       chmod +x extension/debugAdapters/bin/OpenDebugAD7
       cp extension/cppdbg.ad7Engine.json extension/debugAdapters/bin/nvim-dap.ad7Engine.json
-      wget https://ftp.gnu.org/gnu/gdb/gdb-10.2.tar.xz && tar -xvf gdb-10.2.tar.xz
-      cd gdb-10.2/
-      ./configure
-      make
     ]],
 		proxy,
 		proxy
